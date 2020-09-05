@@ -1,5 +1,6 @@
 package com.felhr.serialportexample;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -10,17 +11,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     /*
      * Notifications from UsbService will be received here.
@@ -48,9 +44,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
     private UsbService usbService;
-    private TextView display;
-    private EditText editText;
     private MyHandler mHandler;
+    String messageString = "";
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
@@ -67,24 +62,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         mHandler = new MyHandler(this);
+    }
 
-        display = (TextView) findViewById(R.id.textView1);
-        editText = (EditText) findViewById(R.id.editText1);
-        Button sendButton = (Button) findViewById(R.id.buttonSend);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!editText.getText().toString().equals("")) {
-                    String data = editText.getText().toString();
-                    if (usbService != null) { // if UsbService was correctly binded, Send data
-                        usbService.write(data.getBytes());
-                    }
-                }
-            }
-        });
+    // Called from Unity
+    public void Send(String data){
+        if (usbService != null) { // if UsbService was correctly bound, Send data
+            usbService.write(data.getBytes());
+        }
+    }
+
+    // Called from Unity
+    public String Poll(){
+        String toReturn = messageString;
+        messageString = "";
+        return toReturn;
     }
 
     @Override
@@ -142,13 +135,14 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
                     String data = (String) msg.obj;
-                    mActivity.get().display.append(data);
+                    // Read Data Here
+                    mActivity.get().messageString += data;
                     break;
                 case UsbService.CTS_CHANGE:
-                    Toast.makeText(mActivity.get(), "CTS_CHANGE",Toast.LENGTH_LONG).show();
+                    //Toast.makeText(mActivity.get(), "CTS_CHANGE",Toast.LENGTH_LONG).show();
                     break;
                 case UsbService.DSR_CHANGE:
-                    Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
+                    //Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
                     break;
             }
         }
